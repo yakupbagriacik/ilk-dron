@@ -6,8 +6,12 @@ void calculate_pressure()
     counter = 10;
   }
   counter--;
-  
+
   actual_pressure = smooth.get();
+  quadprops.baro_height = actual_pressure;
+  KalmanPosVel();
+  initKalmanPosVel();
+  actual_pressure_2 = quadprops.kalmanvel_z;
   if (package.switch2 == 0 && thrust > 1400 && thrust < 1450)
   {
     if (manual_altitude_change == 1)
@@ -59,12 +63,7 @@ void calculate_pressure()
       pid_i_mem_altitude += (pid_i_gain_altitude / 100.0) * pid_error_temp;
       if (pid_i_mem_altitude > pid_max_altitude)pid_i_mem_altitude = pid_max_altitude;
       else if (pid_i_mem_altitude < pid_max_altitude * -1)pid_i_mem_altitude = pid_max_altitude * -1;
-      //In the following line the PID-output is calculated.
-      //P = (pid_p_gain_altitude + pid_error_gain_altitude) * pid_error_temp.
-      //I = pid_i_mem_altitude += (pid_i_gain_altitude / 100.0) * pid_error_temp (see above).
-      //D = pid_d_gain_altitude * parachute_throttle.
       pid_output_altitude = (100 * (pid_p_gain_altitude + pid_error_gain_altitude) * pid_error_temp + pid_i_mem_altitude + pid_d_gain_altitude * parachute_throttle);
-      //To prevent extreme PID-output the output must be limited.
       if (pid_output_altitude > pid_max_altitude)pid_output_altitude = pid_max_altitude;
       else if (pid_output_altitude < pid_max_altitude * -1)pid_output_altitude = pid_max_altitude * -1;
     }

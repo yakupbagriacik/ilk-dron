@@ -61,6 +61,7 @@ float actual_pressure, pid_error_temp;
 uint8_t manual_altitude_change;
 int16_t manual_throttle;
 byte hold;
+float  actual_pressure_2;
 
 // Kumanda verisi hassasiyeti.
 float sensiX = -0.45;
@@ -142,6 +143,22 @@ Vec3 cal        = {0, 0, 0};
 Vec3 rawCal     = {0, 0, 0};
 Vec3 prevError  = {0, 0, 0};
 
+//Kalman filtresi parametreleri
+struct quad_properties {
+  float height;
+  float kalmanvel_z;
+  float baro_height;
+};
+struct quad_properties quadprops;
+struct matrix2x2 {
+  float m11;
+  float m21;
+  float m12;
+  float m22;
+};
+struct matrix2x2 current_prob;
+
+
 //_______________________________________Function Prototypes_____________________________________________
 void Print();
 void readEEPROM();
@@ -156,11 +173,13 @@ void resetYaw();
 void calculate_pressure();
 void calculate_battery();
 int led(int t);
+void KalmanPosVel();
+void initKalmanPosVel();
 
 
 
 void setup() {
-  //Serial.begin(57600);
+  Serial.begin(57600);
   debugging(false);
   prevTime = micros();
   timepi = (1 / hz);
@@ -213,7 +232,7 @@ void loop() {
   calculatePID();
   calculateVelocities();
   runMotors();
-  //Print();
+  Print();
   wait();
 }
 
@@ -561,26 +580,25 @@ void resetYaw()
   target.z = 0;
 }
 
-int mete_counter = 0;
-unsigned long mete_time = millis();
 void Print()
 {
 
-  if(millis() - mete_time > 1000){
-    Serial.println(mete_counter);
-    mete_time = millis();
-    mete_counter = 0;
-  }
-  mete_counter++;
-  
-  Serial.print("pid_output_altitude= ");
-  Serial.print(pid_output_altitude);
+//  Serial.print("pid_output_altitude= ");
+//  Serial.print(pid_output_altitude);
+//  Serial.print("\t");;
+//  Serial.print("pid_error_temp= ");
+//  Serial.print(pid_error_temp);
+//  Serial.print("\t");
+//  Serial.print("thrust_2= ");
+//  Serial.print(thrust_2);
+
+  Serial.print("actual_pressure= ");
+  Serial.print(actual_pressure);
   Serial.print("\t");;
-  Serial.print("pid_error_temp= ");
-  Serial.print(pid_error_temp);
-  Serial.print("\t");;
-  Serial.print("thrust_2= ");
-  Serial.println(thrust_2);
+  Serial.print("actual_pressure_2= ");
+  Serial.print(actual_pressure_2);
+  Serial.print("\t");
+
   //  static_cast to reduce string length;
   //  Serial.print(static_cast<int>(FrontLeft));      //motor signals
   //  Serial.print("\t");
@@ -608,6 +626,6 @@ void Print()
   //  Serial.print(static_cast<int>(package.y));
   //  Serial.print("\t");
   //  Serial.print(static_cast<int>(package.z));
-  //  Serial.println("\t");
+  Serial.println("\t");
 
 }
